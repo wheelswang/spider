@@ -6,7 +6,6 @@
 	include dirname(__FILE__).'/Crawler.php';
 	include dirname(__FILE__).'/Parser.php';
 	class SpiderController {
-		protected $config;
 		protected $domain;
 		protected $timeout = 2;
 		protected $page_suffix;
@@ -16,6 +15,7 @@
 		protected $subdomain_page;
 		protected $page_limit;
 		protected $page_counter;
+		public $config;
 		public $crawled_url;
 		public $task_url;
 		public $dead_url;
@@ -54,7 +54,7 @@
 		
 		public function start() {
 			while($this->task_url) {
-				log_info('task_url:' . count($this->task_url));
+				log_info('task_url:' . count($this->task_url), basename(__FILE__), __LINE__);
 				$urls = array_splice($this->task_url, 0, 1);
 				$my_urls = array_values($urls);
 				$this->work($my_urls[0]);
@@ -78,12 +78,12 @@
 		}
 
 		protected function work($url) {
-			log_info('begin url:' . $url);
-			log_info('begin crawl');
+			log_info('begin url:' . $url, basename(__FILE__), __LINE__);
+			log_info('begin crawl', basename(__FILE__), __LINE__);
 			$page = $this->crawler->crawl($url);
-			log_info('finish crawl');
+			log_info('finish crawl', basename(__FILE__), __LINE__);
 			if(!trim($page)) {
-				log_err('crawl error url:' . $url);
+				log_err('crawl error url:' . $url, basename(__FILE__), __LINE__);
 				if(!isset($this->failed_url[$url])) {
 					$this->failed_url[$url] = 1;
 				}
@@ -99,18 +99,17 @@
 				return;
 			}
 			$this->crawled_url[] = $url;
-			log_info('begin parse');
+			log_info('begin parse', basename(__FILE__), __LINE__);
 			$data = $this->parser->parse($page, $url);
 			if($data === false) {
-				log_err('parse error:' . $this->parser->errMsg);
-				log_err('parser error url : ' . $url);
+				log_err('parse error:' . $this->parser->errMsg, basename(__FILE__), __LINE__);
 				return;
 			}
-			log_info('finish parse');
+			log_info('finish parse', basename(__FILE__), __LINE__);
 			$forward_urls = $data['urls'];
-			log_info('get url num:' . count($forward_urls));
+			log_info('get url num:' . count($forward_urls), basename(__FILE__), __LINE__);
 			$forward_urls = $this->filter_url($forward_urls);
-			log_info('url num after filter:' . count($forward_urls));
+			log_info('url num after filter:' . count($forward_urls), basename(__FILE__), __LINE__);
 			if(!is_array($data['data'])) {
 				var_export($data);
 			}
@@ -127,7 +126,7 @@
 				$url_struct = parse_url($url);
 				$this->curr_url_struct = $url_struct;
 				if($url_struct === false || !isset($url_struct['scheme']) || !isset($url_struct['host'])) {
-					log_err('err url:' . $url);
+					log_err('err url:' . $url, basename(__FILE__), __LINE__);
 					continue;
 				}
 				$url = $this->clean_url($url);

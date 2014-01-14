@@ -15,7 +15,8 @@
 			$dom = str_get_html($html);
 			if($dom === false) {
 				$this->errCode = 100;
-				$this->errMsg = 'get dom error:' . $html;
+				$this->errMsg = 'get dom error url' . $url;
+				$this->put_err_html($html, $url);
 				return false;
 			}
 			$config = $this->subdomain_config[$url_struct['host']];
@@ -29,14 +30,16 @@
 								$dom_items = $this->find($dom, $block_config);
 								if(!$dom_items) {
 									$this->errCode = 101;
-									$this->errMsg = 'get block error:' . $block_config['where'];
+									$this->errMsg = 'get block error:' . $block_config['where'] . ' url:' . $url;
+									$this->put_err_html($html, $url);
 									return false;
 								}
 								foreach($dom_items as $item_pos => $dom_item) {
 									foreach($block_config['detail'] as $detail_config) {
 										$o = $this->find($dom_item, $detail_config, 0);
 										if(!$o && (!isset($detail_config['dispensable']) || !$detail_config['dispensable'])) {
-											log_err('get ' . $detail_config['type'] . ' error|pos:' . $item_pos);
+											log_err('get ' . $detail_config['type'] . ' error|pos:' . $item_pos . ' dom:' . $dom_item . ' url:' . $url, basename(__FILE__), __LINE__);
+											$this->put_err_html($html, $url);
 											break;
 										}
 										$v = @$o->$detail_config['attr'];
@@ -44,7 +47,8 @@
 											$v = $o->$detail_config['attr2'];
 										}
 										if(!$v && (!isset($detail_config['dispensable']) || !$detail_config['dispensable'])) {
-											log_err('get ' . $detail_config['type'] . '->attr error|pos:' . $item_pos);
+											log_err('get ' . $detail_config['type'] . '->attr error|pos:' . $item_pos . ' dom:' . $dom_item . ' url:' . $url, basename(__FILE__), __LINE__);
+											$this->put_err_html($html, $url);
 											break;
 										}
 										if(isset($detail_config['callback'])) {
@@ -122,6 +126,11 @@
 				$url = $url_struct['scheme'] . '://' . $url_struct['host'] . str_replace('\\', '/', dirname($url_struct['path'])) . '/' . $url;//str_replace for win
 			}
 			return $url;		
+		}
+
+		private function put_err_html($html, $url) {
+			$path = $this->controller->config['log_dir'] . '/' . urlencode($url);
+			file_put_contents($path, $html);
 		}
 	}
 ?>

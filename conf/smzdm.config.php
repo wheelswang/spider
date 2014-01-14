@@ -17,20 +17,20 @@
 								array('type' => 'name', 'where' => '.con_title a[title]', 'attr'=>'title', 'callback' => function($str) {
 									return trim($str);
 								}),
-								array('type' => 'url', 'where' => 'div[id^=buy_url] a', 'attr' => 'href', 'callback' => function($str) {
+								array('type' => 'url', 'where' => '.bugBlock a', 'where2' => '.bugBlockMore a', 'attr' => 'href', 'callback' => function($str) {
 									global $b2c_domain;
 									global $curl;
 
 									$html = $curl->get_http_body($str);
 									$patten = "/smhrefzdm = '(.*?)'/i";
-									if(false === preg_match($patten, $html, $matches)) {
-										log_err('preg match error,patten:' . $patten . ',html:' . $html);
+									if(!preg_match($patten, $html, $matches)) {
+										log_err('preg match error,patten:' . $patten . ',url:' . $str . ',html:' . $html, basename(__FILE__), __LINE__);
 										return $str;
 									}
 
 									$url = $matches[1];
 
-									log_info('get product url:' . $url);
+									log_info('get product url:' . $url, basename(__FILE__), __LINE__);
 									
 									return $url;
 								}),

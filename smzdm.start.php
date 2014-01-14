@@ -3,6 +3,7 @@
 	ini_set('memory_limit', '2000M');
 	date_default_timezone_set('Asia/Shanghai');
 	error_reporting(E_ALL);
+	umask(0);
 	include 'lib/SpiderController.php';
 	include 'lib/HttpCurl.php';
 	$curl = new HttpCurl;
