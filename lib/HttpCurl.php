@@ -7,58 +7,58 @@
 
 class HttpCurl {
 
-	private $proxy_host = null;
-	private $proxy_port = 80;
-	private $http_header = null;
-	private $timeout = 0;
+	static private $proxy_host = null;
+	static private $proxy_port = 80;
+	static private $http_header = null;
+	static private $timeout = 0;
 
-	public $errMsg = '';
+	static public $errMsg = '';
 
-	public function set_proxy($proxy_host, $proxy_port) {
-		$this->proxy_host = $proxy_host;
-		$this->proxy_port = $proxy_port;
+	static public function set_proxy($proxy_host, $proxy_port) {
+		self::$proxy_host = $proxy_host;
+		self::$proxy_port = $proxy_port;
 	}
 
-	public function set_timeout($sec) {
-		$this->timeout = $sec;
+	static public function set_timeout($sec) {
+		self::$timeout = $sec;
 	}
 
-	public function set_header($http_header) {
-		$this->http_header = $http_header;
+	static public function set_header($http_header) {
+		self::$http_header = $http_header;
 	}
 
-	public function exec($url, $method = 'GET', $post_argv = null ,$port = 80) {
-		$url_struct = $this->getUrlStruct($url);
+	static public function exec($url, $method = 'GET', $post_argv = null ,$port = 80) {
+		$url_struct = self::getUrlStruct($url);
 		if(!$url_struct) {
 			return false;
 		}
 		$host = $url_struct['host'];
 		$uri = $url_struct['path'] . ($url_struct['query'] ? '?' . $url_struct['query'] : '');
 
-		if($this->proxy_host) {
-			$fp = @fsockopen('tcp://' . $this->proxy_host, $this->proxy_port, $errno, $errstr, $this->timeout ? $this->timeout : ini_get("default_socket_timeout"));
+		if(self::$proxy_host) {
+			$fp = @fsockopen('tcp://' . self::$proxy_host, self::$proxy_port, $errno, $errstr, self::$timeout ? self::$timeout : ini_get("default_socket_timeout"));
 		}
 		else {
-			$fp = @fsockopen($host, $port, $errno, $errstr, $this->timeout ? $this->timeout : ini_get("default_socket_timeout"));
+			$fp = @fsockopen($host, $port, $errno, $errstr, self::$timeout ? self::$timeout : ini_get("default_socket_timeout"));
 		}
 		if(!$fp) {
-			$this->errMsg = $errno . ':' . $errstr;
+			self::$errMsg = $errno . ':' . $errstr;
 			return false;
 		}
 		
-		if($this->timeout) {
-			stream_set_timeout($fp, $this->timeout);
+		if(self::$timeout) {
+			stream_set_timeout($fp, self::$timeout);
 		}
 	
-		if($this->proxy_host) {
-			$http_req = "$method http://$host:$port$uri HTTP/1.0\r\nHOST:$host:$port\r\nConnection:Close\r\n";
+		if(self::$proxy_host) {
+			$http_req = "$method http://$host:$port$uri HTTP/1.1\r\nHOST:$host:$port\r\nConnection:Close\r\n";
 		}
 		else {
-			$http_req = "$method $uri HTTP/1.0\r\nHOST:$host:$port\r\nConnection:Close\r\n";
+			$http_req = "$method $uri HTTP/1.1\r\nHOST:$host:$port\r\nConnection:Close\r\n";
 		}
 
-		if($this->http_header) {
-			foreach($this->http_header as $key => $value) {
+		if(self::$http_header) {
+			foreach(self::$http_header as $key => $value) {
 				$http_req .= "$key:$value\r\n";
 			}
 		}
@@ -81,7 +81,7 @@ class HttpCurl {
 		$rw = fwrite($fp, $http_req);
 
 		if($rw != strlen($http_req)) {
-			$this->errMsg = 'send http error';
+			self::$errMsg = 'send http error';
 			return false;
 		}
 
@@ -89,7 +89,7 @@ class HttpCurl {
 		$http_rsp_body = '';
 		$recv_head = true;
 
-		$line = $this->http_gets($fp);
+		$line = self::http_gets($fp);
 		if($line === false) {
 			return false;
 		}
@@ -97,7 +97,7 @@ class HttpCurl {
 		$http_rsp_header[0] = trim($line);
 
 		while(!feof($fp)) {
-			$line = $this->http_gets($fp);
+			$line = self::http_gets($fp);
 			if($line === false) {
 				return false;
 			}
@@ -118,55 +118,61 @@ class HttpCurl {
 		return array('http_head' => $http_rsp_header, 'http_body' => $http_rsp_body);
 	}
 
-	public function get_http_body($url) {
-		$ret = $this->exec($url);
+	static public function get_http_body($url) {
+		$ret = self::exec($url);
+		if($ret === false) {
+			return false;
+		}
 		return $ret['http_body'];
 	}
 
-	private function http_gets($fp) {
+	static private function http_gets($fp) {
 		$line = fgets($fp, 1024*100);
 		$info = stream_get_meta_data($fp);
 		if($info['timed_out']) {
-			$this->errMsg = 'fgets timeout';
+			self::$errMsg = 'fgets timeout';
 			return false;
 		}
 		return $line;
 	}
 
-	public function get_final_http_body($url) {
-		$ret = $this->exec($url);
+	static public function get_final_http_body($url) {
+		$ret = self::exec($url);
 		$http_head = $ret['http_head'];
 		if(isset($http_head['Location'])) {
-			//相对路径
+			//鐩稿璺緞
 			if(strpos($http_head['Location'], 'http') !== 0) {
 				$http_head['Location'] = $url_struct['host'] . $http_head['Location'];
 			}
 
-			return $this->get_final_http_body($http_head['Location']);
+			return self::get_final_http_body($http_head['Location']);
 		}
 		return $ret['http_body'];
 	}
 
-	public function get_final_url($url, $exclude = array()) {
-		$ret = $this->exec($url);
+	static public function get_final_url($url, $exclude = array()) {
+		$ret = self::exec($url);
+		if($ret === false) {
+			return false;
+		}
 		$http_head = $ret['http_head'];
 		if(isset($http_head['Location'])) {
-			//相对路径
+			//鐩稿璺緞
 			if(strpos($http_head['Location'], 'http') !== 0) {
 				$http_head['Location'] = $url_struct['host'] . $http_head['Location'];
 			}
 
-			$domain = $this->getDomain($http_head['Location']);
+			$domain = self::getDomain($http_head['Location']);
 			if(in_array($domain, $exclude)) {
 				return $http_head['Location'];
 			}
 
-			return $this->get_final_url($http_head['Location'], $exclude);
+			return self::get_final_url($http_head['Location'], $exclude);
 		}
 		return $url;
 	}
 
-   public static function getUrlStruct($url) {
+   static public function getUrlStruct($url) {
         $struct = parse_url($url);
         if($struct && isset($struct['host']) && isset($struct['scheme'])) {
             if(!isset($struct['path'])) {
@@ -180,14 +186,28 @@ class HttpCurl {
         return false;
     }
 
-    public static function getDomain($url) {
-        $struct = parse_url($url);
-        $host = $struct['host'];
-        preg_match("/[^\.\/]+\.[^\.\/]+$/", $host, $matches);
-        return $matches[0];
-    }
+	static public function getDomain($url) {
+		$struct = parse_url($url);
+		$host = $struct['host'];
+		preg_match("/[^\.\/]+\.[^\.\/]+$/", $host, $matches);
+		return $matches[0];
+	}
 
+	static public function getUrlArgu($url) {
+		$struct = parse_url($url);
+		if(!isset($struct['query'])) {
+			return array();
+		}
 
+		$ret = array();
+		$items = explode('&', $struct['query']);
+		foreach($items as $item) {
+			$arr = explode('=', $item);
+			$ret[$arr[0]] = isset($arr[1]) ? $arr[1] : '';
+		}
+
+		return $ret;
+	}
 }
 
 ?>
