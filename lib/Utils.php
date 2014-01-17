@@ -12,7 +12,7 @@ class Utils
         curl_setopt($ch, CURLOPT_TIMEOUT, $timeout);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
 
-		//curl_setopt($ch, CURLOPT_PROXY, 'http://proxy.tencent.com:8080/');
+		curl_setopt($ch, CURLOPT_PROXY, 'http://proxy.tencent.com:8080/');
         $headerAry = array(
             'User-Agent:Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.31 (KHTML, like Gecko) Chrome/26.0.1410.64 Safari/537.31',
         );
@@ -55,21 +55,6 @@ class Utils
             $ret[$keys[0]] = $line[$keys[0]];
         }
         return $ret;
-    }
-
-    public static function getDomain($url) {
-        $struct = parse_url($url);
-        $host = $struct['host'];
-        preg_match("/[^\.\/]+\.[^\.\/]+$/", $host, $matches);
-        return $matches[0];
-    }
-
-    public static function isSmzdmLink($url) {
-        $domain = self::getDomain($url);
-        if($domain == 'zdmimg.com') {
-            return true;
-        }
-        return false;
     }
 
     public static function savePic($url, $dir) {
