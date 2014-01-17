@@ -1,8 +1,6 @@
 <?php
 	
-	include '../lib/Sqlite3DB.php';
-
-	$web_root = '/Library/WebServer/Documents/www_eccbuy_net/';
+	include '../conf/config.php';
 
 	if(!isset($_SERVER['argv'][1])) {
 		$_SERVER['argv'][1] = date('Y-m-d');
@@ -31,7 +29,7 @@
 	);
 
 	//获取分类
-	$db = new Sqlite3DB($web_root . 'data/data.db');
+	$db = new Sqlite3DB(ROOT . 'data/data.db');
 	$categories = $db->getRows('select * from category_1');
 	foreach($categories as $category) {
 		$c1_id = $category['id'];
@@ -144,7 +142,7 @@
 		
 	}
 
-	cope_dir(dirname(__FILE__) . '/../data/smzdm/' . date('Y_m_d', $time) . '/img/', $web_root . 'img/smzdm');
+	cope_dir(dirname(__FILE__) . '/../data/smzdm/' . date('Y_m_d', $time) . '/img/', ROOT . 'img/smzdm');
 
 	function cope_dir($source,$target ){
 		if(is_dir($source)){
