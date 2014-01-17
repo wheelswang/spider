@@ -14,31 +14,17 @@
 				'/fenlei\/.*/i' => array(
 					'parser' => array(
 						array('where' => ".perContentBox", 'type' => 'item_block', 'detail' => array(
-								array('type' => 'name', 'where' => '.con_title a[title]', 'attr'=>'title', 'callback' => function($str) {
+								array('type' => 'name', 'where' => '.con_title a', 'attr'=>'plaintext', 'callback' => function($str) {
 									return trim($str);
 								}),
 								array('type' => 'url', 'where' => '.bugBlock a', 'where2' => '.bugBlockMore a', 'attr' => 'href', 'callback' => function($str) {
-									global $b2c_domain;
-									global $curl;
-
-									$html = $curl->get_http_body($str);
-									$patten = "/smhrefzdm = '(.*?)'/i";
-									if(!preg_match($patten, $html, $matches)) {
-										log_err('preg match error,patten:' . $patten . ',url:' . $str . ',html:' . $html, basename(__FILE__), __LINE__);
-										return $str;
-									}
-
-									$url = $matches[1];
-
-									log_info('get product url:' . $url, basename(__FILE__), __LINE__);
-									
-									return $url;
+									return SmzdmModel::getProductUrl($str);
 								}),
-								array('type' => 'href', 'where' => '.con_title a[title]', 'attr' => 'href', 'callback' => function($str) {
+								array('type' => 'href', 'where' => '.con_title a', 'attr' => 'href', 'callback' => function($str) {
 									return $str;
 								}),
 								array('type' => 'pic', 'where' => '.imgBox img', 'attr' => 'src', 'callback' => function($str) {
-									if(Utils::isSmzdmLink($str)) {
+									if(SmzdmModel::isMyImgLink($str)) {
 										$file_path = Utils::savePic($str, dirname(__FILE__) . '/' . '/../data/smzdm/' . date('Y_m_d') . '/img/');
 										if($file_path === false) {
 											log_err('crawl product img error:' . $str);
@@ -66,7 +52,7 @@
 				),
 				'/\/youhui\/\d+/i' => array(
 					'parser' => array(
-						array('where' => '#commentTabBlockNew li[id^=li-comment-]', 'type' => 'comment', 'detail' => array(
+						array('where' => 'li[id^=li-comment-]', 'type' => 'comment', 'detail' => array(
 								array('type' => 'name', 'where' => '.commentName a', 'attr' => 'plaintext', 'callback' => function($str) {
 									return trim($str);
 								}),
@@ -76,8 +62,24 @@
 							)
 						)
 					)
-				)
+				),
 			),
+			'haitao.smzdm.com' => array(
+				'/\/youhui\/\d+/i' => array(
+					'parser' => array(
+						array('where' => 'li[id^=li-comment-]', 'type' => 'comment', 'detail' => array(
+								array('type' => 'name', 'where' => '.commentName a', 'attr' => 'plaintext', 'callback' => function($str) {
+									return trim($str);
+								}),
+								array('type' => 'content', 'where' => '.hComment', 'attr' => 'plaintext', 'callback' => function($str) {
+									return trim($str);
+								})
+							)
+						)
+					)
+				),
+			)
 		),
 	);
+
 ?>
