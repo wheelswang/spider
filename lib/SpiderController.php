@@ -22,6 +22,7 @@
 		public $crawler;
 		public $parser;
 		public $data;
+		public $work_time;
 		public function __construct($config) {
 			$this->config = $config;
 			$this->domain = $config['domain'];
@@ -34,7 +35,7 @@
 			$this->task_url = array($config['entry'] => $config['entry']);
 			$this->data_dir = $config['data_dir'];
 			$this->data = array();
-			$this->crawler = new Crawler;
+			$this->crawler = new Crawler($this);
 			$this->parser = new Parser($config['subdomain'], $this);
 			foreach($config['subdomain'] as $subdomain => $sub_configs) {
 				foreach($sub_configs as $page_format => $page_config) {
@@ -44,6 +45,9 @@
 					}
 				}
 			}
+
+			$this->work_time = time();
+
 			if(!file_exists($config['log_dir'])) {
 				mkdir($config['log_dir'], 755, true);
 			}
@@ -78,8 +82,7 @@
 		}
 
 		protected function work($url) {
-			log_info('begin url:' . $url, basename(__FILE__), __LINE__);
-			log_info('begin crawl', basename(__FILE__), __LINE__);
+			log_info('begin crawl:' . $url, basename(__FILE__), __LINE__);
 			$page = $this->crawler->crawl($url);
 			log_info('finish crawl', basename(__FILE__), __LINE__);
 			if(!trim($page)) {
@@ -205,7 +208,7 @@
 
 		public function export($sub_dir = '') {
 			echo "exporting\n";
-			$dir = $this->data_dir . '/' . date('Y_m_d') . '/' . $sub_dir . '/';
+			$dir = $this->data_dir . '/' . date('Y_m_d_H', $this->work_time) . '/' . $sub_dir . '/';
 			if(!file_exists($dir)) {
 				mkdir($dir, 755, true);
 			}
